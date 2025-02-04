@@ -14,7 +14,7 @@ const courseSchema = new mongoose.Schema({
         ref: 'User'
     },
     duration: {
-        type: String,
+        type: Number,
         default: 0
     },
     isDeleted: {

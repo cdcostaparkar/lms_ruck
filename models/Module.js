@@ -25,7 +25,11 @@ const moduleSchema = new mongoose.Schema({
     module_order: {
         type: Number,
         required: true
-    }
+    },
+    duration: {
+        type: Number, // in days
+        required: true
+    },
 });
 
 const Module = mongoose.model('Module', moduleSchema);
