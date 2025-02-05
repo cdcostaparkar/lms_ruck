@@ -8,4 +8,7 @@ router.get('/getUserDetails/:id', userController.getUserDetails);
 router.get('/getUserProgress/:userId', userController.getUserProgress);
 router.get('/getCompletedCourses/:userId', userController.getCompletedCourses);
 
+// delete users
+router.delete('/adminDeleteUsers', userController.adminDeleteUsers);
+
 module.exports = router;

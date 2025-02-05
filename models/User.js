@@ -20,8 +20,9 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     phone: {
-        type: String,
-        required: true
+        type: Number,
+        required: true,
+        min:[10, 'Phone Number must have 10 digits.']
     },
     address: {
         type: String,
@@ -30,16 +31,18 @@ const userSchema = new mongoose.Schema({
     role_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Role'
-    },
-    created_at: {
-        type: Date,
-        default: Date.now
-    },
-    updated_at: {
-        type: Date,
-        default: Date.now
     }
-});
+    // created_at: {
+    //     type: Date,
+    //     default: Date.now
+    // },
+    // updated_at: {
+    //     type: Date,
+    //     default: Date.now
+    // }
+
+}, {timestamps: true});
+
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;

@@ -15,21 +15,22 @@ const courseSchema = new mongoose.Schema({
     },
     duration: {
         type: Number,
-        default: 0
+        default: 0,
+        min:[0, 'Duration must be a positive number.']
     },
     isDeleted: {
         type: Boolean,
-        default: false
-    },
-    created_at: {
-        type: Date,
-        default: Date.now
-    },
-    updated_at: {
-        type: Date,
-        default: Date.now
+        default: false //for-soft delete
     }
-});
+    // created_at: {
+    //     type: Date,
+    //     default: Date.now
+    // },
+    // updated_at: {
+    //     type: Date,
+    //     default: Date.now
+    // }
+}, {timestamps: true});
 
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;

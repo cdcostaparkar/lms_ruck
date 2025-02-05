@@ -67,3 +67,15 @@ exports.getCompletedCourses = async (req, res) => {
         res.status(404).json({ error: 'Courses not found' });
     }
 };
+
+// Admin Delete Users - adminDeleteUsers
+exports.adminDeleteUsers = async (req, res) => {
+    try {
+        // Delete all users from the User collection
+        console.log("hi");
+        const result = await User.deleteMany({});
+        res.json({ message: `${result.deletedCount} users deleted successfully.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
