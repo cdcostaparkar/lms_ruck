@@ -2,12 +2,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
 const userRoutes = require('./routes/userRoutes');
+const moduleRoutes=require('./routes/moduleRoutes');
 const courseRoutes = require('./routes/courseRoutes');
-const moduleRoutes = require('./routes/moduleRoutes');
-
-require('dotenv').config();
+const roleRoutes = require('./routes/roleRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/modules', moduleRoutes);
+app.use('/api/roles', roleRoutes);
 
 
 // Start the server
