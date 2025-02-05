@@ -11,4 +11,7 @@ router.get('/getCompletedCourses/:userId', userController.getCompletedCourses);
 // delete users
 router.delete('/adminDeleteUsers', userController.adminDeleteUsers);
 
+// get all users
+router.get('/getAllUsers',userController.getAllUsers);
+
 module.exports = router;
