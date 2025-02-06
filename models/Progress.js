@@ -9,10 +9,6 @@ const progressSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    // last_accessed_time: {
-    //     type: Date,
-    //     default: Date.now
-    // }
 });
 
 const Progress = mongoose.model('Progress', progressSchema);

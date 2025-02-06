@@ -16,6 +16,10 @@ const enrollmentSchema = new mongoose.Schema({
     completed_modules: {
         type: Number,
         default: 0
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false 
     }
 });
 

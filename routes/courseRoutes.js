@@ -6,12 +6,18 @@ router.post('/createCourse/:userId', courseController.createCourse);
 router.get('/getAllCourses', courseController.getAllCourses);
 
 // router.patch('/updateCourse/:courseId', courseController.updateCourse);
-router.patch('/updateCourse/:courseId?userId=:userId', courseController.updateCourse);
+router.patch('/updateCourse/:courseId', courseController.updateCourse);
 
 router.patch('/deleteCourse/:courseId', courseController.deleteCourse);
-router.get('/getTrainerCourses/:trainerId', courseController.getTrainerCourses);
+
+// trainer APIs
+router.get('/getTrainerCourses/:userId', courseController.getTrainerCourses);
+router.get('/getNotTrainerCourses/:userId', courseController.getNotTrainerCourses);
 
 // enrollment table required
 router.get('/getUserCourses/:userId', courseController.getUserCourses);
+
+// Admin Delete
+router.delete('/adminDeleteCourses', courseController.adminDeleteCourses);
 
 module.exports = router;

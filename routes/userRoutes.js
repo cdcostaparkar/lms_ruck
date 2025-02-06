@@ -10,6 +10,9 @@ router.get('/getCompletedCourses/:userId', userController.getCompletedCourses);
 
 // delete users
 router.delete('/adminDeleteUsers', userController.adminDeleteUsers);
+router.delete('/adminDeleteUserId/:userId', userController.adminDeleteUserId);
+
+
 
 // get all users
 router.get('/getAllUsers',userController.getAllUsers);

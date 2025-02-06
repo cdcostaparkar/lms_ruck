@@ -48,12 +48,12 @@ exports.createUser = async (req, res) => {
         await user.save();
         res.status(201).json({
             userId: user._id,
-            username: user.username,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            address: user.address,
-            role_id: user.role_id 
+            // username: user.username,
+            // name: user.name,
+            // email: user.email,
+            // phone: user.phone,
+            // address: user.address,
+            role_name: role_name 
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -109,12 +109,29 @@ exports.getCompletedCourses = async (req, res) => {
     }
 };
 
+
+/* Admin APIs */
 // Admin Delete Users - adminDeleteUsers
 exports.adminDeleteUsers = async (req, res) => {
     try {
         // Delete all users from the User collection
         const result = await User.deleteMany({});
         res.json({ message: `${result.deletedCount} users deleted successfully.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Admin Delete User by ID - adminDeleteUserId
+exports.adminDeleteUserId = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        // Delete the user with the specified ID from the User collection
+        const result = await User.findByIdAndDelete(userId);
+        if (!result) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ message: 'User deleted successfully.' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
