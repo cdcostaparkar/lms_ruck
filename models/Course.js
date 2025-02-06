@@ -22,14 +22,6 @@ const courseSchema = new mongoose.Schema({
         type: Boolean,
         default: false //for-soft delete
     }
-    // created_at: {
-    //     type: Date,
-    //     default: Date.now
-    // },
-    // updated_at: {
-    //     type: Date,
-    //     default: Date.now
-    // }
 }, {timestamps: true});
 
 const Course = mongoose.model('Course', courseSchema);

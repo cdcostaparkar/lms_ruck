@@ -109,6 +109,8 @@ exports.getCompletedCourses = async (req, res) => {
     }
 };
 
+
+/* Admin APIs */
 // Admin Delete Users - adminDeleteUsers
 exports.adminDeleteUsers = async (req, res) => {
     try {
