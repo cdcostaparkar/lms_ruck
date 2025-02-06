@@ -82,6 +82,25 @@ exports.deleteCourse = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+// Get Courses Belonging to Trainer
+exports.getTrainerCourses = async (req, res) => {
+    try {
+        const courses = await Course.find({ trainer_id: req.params.userId, isDeleted: false });
+        res.json(courses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Get Courses Not Belonging to Trainer
+exports.getNotTrainerCourses = async (req, res) => {
+    try {
+        const courses = await Course.find({ trainer_id: { $ne: req.params.userId }, isDeleted: false });
+        res.json(courses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // Get Trainer Courses - for Security but more hits on server(not fully implemented)
 // exports.getTrainerCourses = async (req, res) => {
@@ -94,7 +113,7 @@ exports.deleteCourse = async (req, res) => {
 // };
 
 /* Do once enrollment is done */
-// Get User Courses
+// Get User Courses - Replaced with getAllEnrolledCourses
 exports.getUserCourses = async (req, res) => {
     try {
         const enrollments = await Enrollment.find({ student_id: req.params.userId }).populate('course_id');

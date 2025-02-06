@@ -4,7 +4,7 @@ const Course = require('../models/Course')
 // Get Modules
 exports.getModules = async (req, res) => {
     try {
-        console.log(req.params.courseId);
+        // console.log(req.params.courseId);
         const modules = await Module.find({ course_id: req.params.courseId });
         res.json(modules);
     } catch (error) {
