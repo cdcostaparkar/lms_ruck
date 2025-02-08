@@ -44,6 +44,16 @@ exports.getAllCourses = async (req, res) => {
     }
 };
 
+// Get All Courses
+exports.getAllCoursesX = async (req, res) => {
+    try {
+        const courses = await Course.find();
+        res.json(courses);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Management How for security
 // Update Course
 exports.updateCourse = async (req, res) => {
