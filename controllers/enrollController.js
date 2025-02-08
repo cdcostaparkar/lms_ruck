@@ -48,6 +48,7 @@ exports.getAllEnrolledCourses = async (req, res) => {
             isDeleted: false
         }).populate({
             path: 'course_id',
+            match: { isDeleted: false },
             populate: {
                 path: 'trainer_id',
                 select: 'name' // Select only the name of the trainer
@@ -71,7 +72,10 @@ exports.getAllEnrolledCourses = async (req, res) => {
             })
         );
 
-        res.status(200).json(courses);
+        // Filter out any courses that are null (deleted)
+        const filteredCourses = courses.filter(course => course.enrollment.course_id !== null);
+
+        res.status(200).json(filteredCourses);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching courses', error });
     }

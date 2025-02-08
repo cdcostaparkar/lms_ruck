@@ -9,6 +9,7 @@ const moduleRoutes=require('./routes/moduleRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const enrollRoutes = require('./routes/enrollRoutes.js');
+const progressRoutes = require('./routes/progressRoutes.js');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,6 +37,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/enroll', enrollRoutes);
+app.use('/api/progress', progressRoutes);
 
 
 // Start the server

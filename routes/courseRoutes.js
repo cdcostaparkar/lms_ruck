@@ -4,6 +4,7 @@ const courseController = require('../controllers/courseController');
 
 router.post('/createCourse/:userId', courseController.createCourse);
 router.get('/getAllCourses', courseController.getAllCourses);
+router.get('/getAllCoursesX', courseController.getAllCoursesX);
 
 // router.patch('/updateCourse/:courseId', courseController.updateCourse);
 router.patch('/updateCourse/:courseId', courseController.updateCourse);
