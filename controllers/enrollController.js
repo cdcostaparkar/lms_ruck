@@ -3,6 +3,7 @@ const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const Progress = require('../models/Progress');
 const User = require('../models/User');
+const Wishlist = require('../models/Wishlist');
 
 // Enroll a student in a course(no check for role yet)
 exports.enrollCourse = async (req, res) => {
@@ -39,10 +40,19 @@ exports.enrollCourse = async (req, res) => {
 };
 
 // Get all enrolled courses for a user
+// Get all enrolled courses for a user with wishlist status
 exports.getAllEnrolledCourses = async (req, res) => {
     const { userId } = req.params;
 
     try {
+        // Step 1: Get all course IDs from the wishlist
+        const wishlists = await Wishlist.find({
+            user_id: userId
+        }).select('course_id');
+
+        const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
+
+        // Step 2: Get all enrolled courses
         const enrollments = await Enrollment.find({
             student_id: userId,
             isDeleted: false
@@ -63,11 +73,8 @@ exports.getAllEnrolledCourses = async (req, res) => {
 
                 return {
                     enrollment,
-                    // course: {
-                    //     ...enrollment.course_id.toObject(), // Convert to plain object
-                    //     trainerName: enrollment.course_id.trainer_id.name // Add trainer's name
-                    // },
-                    progress: progress 
+                    isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
+                    progress
                 };
             })
         );
@@ -81,12 +88,21 @@ exports.getAllEnrolledCourses = async (req, res) => {
     }
 };
 
+
 // Get all courses where the user is not enrolled
+// Get all courses where the user is not enrolled with wishlist status
 exports.getAllNotEnrolledCourses = async (req, res) => {
     const { userId } = req.params;
 
     try {
-        // Step 1: Get all course IDs the user is enrolled in
+        // Step 1: Get all course IDs from the wishlist
+        const wishlists = await Wishlist.find({
+            user_id: userId
+        }).select('course_id');
+
+        const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
+
+        // Step 2: Get all course IDs the user is enrolled in
         const enrollments = await Enrollment.find({
             student_id: userId,
             isDeleted: false
@@ -94,17 +110,24 @@ exports.getAllNotEnrolledCourses = async (req, res) => {
 
         const enrolledCourseIds = enrollments.map(enrollment => enrollment.course_id);
 
-        // Step 2: Get all courses and filter out the enrolled ones
+        // Step 3: Get all courses and filter out the enrolled ones
         const coursesNotEnrolled = await Course.find({
             _id: { $nin: enrolledCourseIds },
             isDeleted: false // Ensure we only get non-deleted courses
         }).populate('trainer_id', 'name'); // Populate trainer's name
 
-        res.status(200).json(coursesNotEnrolled);
+        // Step 4: Add wishlist status to the courses
+        const coursesWithWishlistStatus = coursesNotEnrolled.map(course => ({
+            ...course.toObject(), // Convert to plain object
+            isWishlisted: wishlistedCourseIds.has(course._id.toString()) // Check if the course is wishlisted
+        }));
+
+        res.status(200).json(coursesWithWishlistStatus);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching courses', error });
     }
 };
+
 
 
 // Get all enrolled courses for a user (including soft deleted enrollments)
@@ -162,6 +185,20 @@ exports.deleteEnrollment = async (req, res) => {
 
 /* Admin Test APIs */
 // Get all progress from table
+exports.deleteAllEnrollmentsAndProgress = async (req, res) => {
+    try {
+        // Delete all progress records
+        await Progress.deleteMany({});
+
+        // Delete all enrollments
+        const result = await Enrollment.deleteMany({});
+
+        res.status(200).json({ message: 'All enrollments and related progress deleted permanently', result });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting all enrollments and progress', error });
+    }
+};
+
 exports.getAllProgress = async (req, res) => {
     try {
         const progressRecords = await Progress.find();

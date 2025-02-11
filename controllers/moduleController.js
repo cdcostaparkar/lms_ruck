@@ -4,7 +4,6 @@ const Course = require('../models/Course')
 // Get Modules
 exports.getModules = async (req, res) => {
     try {
-        // console.log(req.params.courseId);
         const modules = await Module.find({ course_id: req.params.courseId });
         res.json(modules);
     } catch (error) {
@@ -18,7 +17,7 @@ exports.createModule = async (req, res) => {
         const { title, description, video_url, content, module_order, duration } = req.body;
 
         const course = await Course.findById(courseId);
-        // console.log(course);
+        
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
         }
