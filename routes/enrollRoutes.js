@@ -11,7 +11,10 @@ router.get('/getAllNotEnrolledCourses/:userId', enrollController.getAllNotEnroll
 
 // Admin APIs
 router.get('/getAllProgress', enrollController.getAllProgress);
-router.delete('/deleteAllEnrollments/:userId/:enrollmentId', enrollController.deleteAllEnrollments);
+router.delete('/deleteAllEnrollments', enrollController.deleteAllEnrollments);
 router.get('/getAllEnrolledCoursesX/:userId', enrollController.getAllEnrolledCoursesX);
+// Delete All
+router.delete('/deleteAllEnrollmentsAndProgress', enrollController.deleteAllEnrollmentsAndProgress);
+
 
 module.exports = router;

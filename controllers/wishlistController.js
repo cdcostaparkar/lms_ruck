@@ -1,4 +1,5 @@
 const Wishlist = require('../models//Wishlist'); 
+const Course = require('../models/Course');
 
 // Add to Wishlist
 const addToWishlist = async (req, res) => {
@@ -31,6 +32,32 @@ const removeFromWishlist = async (req, res) => {
     }
 };
 
+// Get all wishlisted courses for a user
+const getAllWishlistedCourses = async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Step 1: Get all course IDs from the wishlist
+        const wishlists = await Wishlist.find({
+            user_id: userId
+        }).select('course_id');
+
+        const wishlistedCourseIds = wishlists.map(wishlist => wishlist.course_id);
+
+        // Step 2: Get all courses from the wishlist
+        // const wishlistedCourses = await Course.find({
+        //     _id: { $in: wishlistedCourseIds },
+        //     isDeleted: false // Ensure we only get non-deleted courses
+        // }).populate('trainer_id', 'name'); // Populate trainer's name
+
+        res.status(200).json(wishlistedCourseIds);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching wishlisted courses', error });
+    }
+};
+
+
+// Admin API
 // Get All Wishlists
 const getAllWishlists = async (req, res) => {
     try {
@@ -41,9 +68,21 @@ const getAllWishlists = async (req, res) => {
     }
 };
 
+// Delete All Wishlists
+const adminDeleteAll = async (req, res) => {
+    try {
+        await Wishlist.deleteMany({});
+        return res.status(200).json({ success: true, message: 'All wishlists have been deleted' });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // Exporting the functions
 module.exports = {
     addToWishlist,
     removeFromWishlist,
-    getAllWishlists
+    getAllWishlistedCourses,
+    getAllWishlists,
+    adminDeleteAll
 };

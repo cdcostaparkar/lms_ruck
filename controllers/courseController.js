@@ -67,7 +67,6 @@ exports.updateCourse = async (req, res) => {
         }
 
         // Check if the course belongs to the user
-        // console.log(course.trainer_id.toString(), userId);
         if (course.trainer_id.toString() !== userId) {
             return res.status(403).json({ error: 'Unauthorized: You do not have permission to update this course' });
         }
