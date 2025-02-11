@@ -67,7 +67,7 @@ exports.getAllEnrolledCourses = async (req, res) => {
                     //     ...enrollment.course_id.toObject(), // Convert to plain object
                     //     trainerName: enrollment.course_id.trainer_id.name // Add trainer's name
                     // },
-                    progress: progress ? progress.status : null
+                    progress: progress 
                 };
             })
         );
