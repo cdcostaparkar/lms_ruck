@@ -52,13 +52,12 @@ exports.getAllEnrolledCourses = async (req, res) => {
         user_id: userId
       }).select('course_id');
   
-      const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
+      const wishlistedCourseIds = new Set(wishlists.map((wishlist) => wishlist.course_id.toString()));
   
-      // console.log(wishlistedCourseIds);
       // Step 2: Get all enrolled courses
       const enrollments = await Enrollment.find({
         student_id: userId,
-        isDeleted: false
+        isDeleted: false,
       }).populate({
         path: 'course_id',
         match: {
@@ -66,45 +65,36 @@ exports.getAllEnrolledCourses = async (req, res) => {
         },
         populate: {
           path: 'trainer_id',
-          select: 'name' // Select only the name of the trainer
-        }
+          select: 'name', // Select only the name of the trainer
+        },
       });
   
-      console.log("hi1", enrollments);
-  
-      // Debug: Check if enrollments is empty
-      if (!enrollments || enrollments.length === 0) {
-        console.log("Enrollments array is empty. Skipping Promise.all.");
-        return res.status(200).json([]); // Or handle the empty case as needed
-      }
-  
+    //   console.log("e", enrollments);
       const courses = await Promise.all(
         enrollments.map(async (enrollment) => {
-          try {
-            if (!enrollment || !enrollment.course_id) {
-              console.warn("Enrollment or course_id is null/undefined:", enrollment);
-              return null; // Skip this enrollment
-            }
-  
-            const progress = await Progress.findOne({
-              enrollment_id: enrollment._id
-            });
-  
-            return {
-              enrollment,
-              isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
-              progress
-            };
-          } catch (error) {
-            console.error("Error in enrollments.map:", error);
-            return null; // Skip this enrollment
+          if (!enrollment.course_id) {
+            // Handle the case where course_id is null
+            return null; // Or return a default object, or throw an error, depending on your needs
           }
+  
+          const progress = await Progress.findOne({
+            enrollment_id: enrollment._id,
+          });
+  
+          return {
+            enrollment,
+            isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
+            progress,
+          };
         })
       );
-      console.log("hi2", courses);
+    //   console.log("c", courses);
   
-      // Filter out any courses that are null (deleted)
-      const filteredCourses = courses.filter(course => course !== null && course.enrollment.course_id !== null);
+      // Filter out any courses that are null (deleted) or that returned null from the map
+      const filteredCourses = courses.filter(
+        (course) => course && course.enrollment.course_id !== null
+      );
+
   
       res.status(200).json(filteredCourses);
     } catch (error) {
@@ -114,7 +104,6 @@ exports.getAllEnrolledCourses = async (req, res) => {
       });
     }
   };
-  
 
 
 // Get all courses where the user is not enrolled
@@ -247,3 +236,139 @@ exports.deleteAllEnrollments = async (req, res) => {
         res.status(500).json({ message: 'Error deleting all enrollments', error });
     }
 };
+
+
+
+
+
+// Enroll with Completion creation
+// V1
+// exports.enrollCourse = async (req, res) => {
+//     const {
+//       userId,
+//       courseId
+//     } = req.params;
+  
+//     try {
+//       // Check if the user is already enrolled in the course
+//       const existingEnrollment = await Enrollment.findOne({
+//         student_id: userId,
+//         course_id: courseId,
+//         isDeleted: false, // Ensure we only check active enrollments
+//       });
+  
+//       if (existingEnrollment) {
+//         return res
+//           .status(400)
+//           .json({
+//             message: "User is already enrolled in this course.",
+//           });
+//       }
+  
+//       // Create enrollment record
+//       const enrollment = await Enrollment.create({
+//         student_id: userId,
+//         course_id: courseId,
+//       });
+  
+//       // Find all modules for the course
+//       const modules = await Module.find({
+//         course_id: courseId
+//       });
+  
+//       // Create module completion records for each module
+//       const moduleCompletions = modules.map((module) => ({
+//         enrollment_id: enrollment._id,
+//         course_id: courseId,
+//         module_id: module._id,
+//       }));
+  
+//       await ModuleCompletion.insertMany(moduleCompletions);
+  
+//       res.status(201).json({
+//         message: "Enrollment successful",
+//         enrollment
+//       });
+//     } catch (error) {
+//       res
+//         .status(500)
+//         .json({
+//           message: "Error enrolling in course",
+//           error
+//         });
+//     }
+//   };
+  
+
+// V2 - Transactions
+// const mongoose = require('mongoose');
+
+// exports.enrollCourse = async (req, res) => {
+//   const {
+//     userId,
+//     courseId
+//   } = req.params;
+
+//   const session = await mongoose.startSession(); // Start a session for the transaction
+//   session.startTransaction(); // Start the transaction
+
+//   try {
+//     // Check if the user is already enrolled in the course
+//     const existingEnrollment = await Enrollment.findOne({
+//       student_id: userId,
+//       course_id: courseId,
+//       isDeleted: false, // Ensure we only check active enrollments
+//     }).session(session); // Associate the query with the session
+
+//     if (existingEnrollment) {
+//       await session.abortTransaction(); // Rollback the transaction
+//       session.endSession(); // End the session
+//       return res
+//         .status(400)
+//         .json({
+//           message: "User is already enrolled in this course.",
+//         });
+//     }
+
+//     // Create enrollment record
+//     const enrollment = await Enrollment.create([{
+//       student_id: userId,
+//       course_id: courseId,
+//     }], {
+//       session
+//     }); // Pass the session to the create operation
+
+//     // Find all modules for the course
+//     const modules = await Module.find({
+//       course_id: courseId
+//     }).session(session); // Associate the query with the session
+
+//     // Create module completion records for each module
+//     const moduleCompletions = modules.map((module) => ({
+//       enrollment_id: enrollment[0]._id, // Access the first element of the array
+//       course_id: courseId,
+//       module_id: module._id,
+//     }));
+
+//     await ModuleCompletion.insertMany(moduleCompletions, {
+//       session
+//     }); // Pass the session to the insertMany operation
+
+//     await session.commitTransaction(); // Commit the transaction
+//     session.endSession(); // End the session
+
+//     res.status(201).json({
+//       message: "Enrollment successful",
+//       enrollment: enrollment[0] // Access the first element of the array
+//     });
+//   } catch (error) {
+//     await session.abortTransaction(); // Rollback the transaction
+//     session.endSession(); // End the session
+//     res
+//       .status(500)
+//       .json({
+//         message: "Error enrolling in course",
+//         error
+//       });
+//   }
+// };
