@@ -4,21 +4,31 @@ const mongoose = require('mongoose');
 const moduleCompletionSchema = new mongoose.Schema({
     enrollment_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Enrollment'
+        ref: 'Enrollment',
+        required: true
     },
     course_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course'
+        ref: 'Course',
+        required: true
     },
     module_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Module'
+        ref: 'Module',
+        required: true
     },
-    completionPercentage: {
+    percentage: {
         type: Number, // decimal(3, 2) => like 0.0 - 1.0
-        default: 0
+        min: 0,
+        max: 1,
+        default: 0,
     },
-}, {timestamps: true});
+}, { timestamps: true });
+
+moduleCompletionSchema.index(
+    { enrollment_id: 1, module_id: 1 },
+    { unique: true }
+);
 
 const ModuleCompletion = mongoose.model('Progress', moduleCompletionSchema);
 module.exports = ModuleCompletion;
