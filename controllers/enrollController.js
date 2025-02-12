@@ -42,51 +42,79 @@ exports.enrollCourse = async (req, res) => {
 // Get all enrolled courses for a user
 // Get all enrolled courses for a user with wishlist status
 exports.getAllEnrolledCourses = async (req, res) => {
-    const { userId } = req.params;
-
+    const {
+      userId
+    } = req.params;
+  
     try {
-        // Step 1: Get all course IDs from the wishlist
-        const wishlists = await Wishlist.find({
-            user_id: userId
-        }).select('course_id');
-
-        const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
-
-        // Step 2: Get all enrolled courses
-        const enrollments = await Enrollment.find({
-            student_id: userId,
-            isDeleted: false
-        }).populate({
-            path: 'course_id',
-            match: { isDeleted: false },
-            populate: {
-                path: 'trainer_id',
-                select: 'name' // Select only the name of the trainer
+      // Step 1: Get all course IDs from the wishlist
+      const wishlists = await Wishlist.find({
+        user_id: userId
+      }).select('course_id');
+  
+      const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
+  
+      // console.log(wishlistedCourseIds);
+      // Step 2: Get all enrolled courses
+      const enrollments = await Enrollment.find({
+        student_id: userId,
+        isDeleted: false
+      }).populate({
+        path: 'course_id',
+        match: {
+          isDeleted: false
+        },
+        populate: {
+          path: 'trainer_id',
+          select: 'name' // Select only the name of the trainer
+        }
+      });
+  
+      console.log("hi1", enrollments);
+  
+      // Debug: Check if enrollments is empty
+      if (!enrollments || enrollments.length === 0) {
+        console.log("Enrollments array is empty. Skipping Promise.all.");
+        return res.status(200).json([]); // Or handle the empty case as needed
+      }
+  
+      const courses = await Promise.all(
+        enrollments.map(async (enrollment) => {
+          try {
+            if (!enrollment || !enrollment.course_id) {
+              console.warn("Enrollment or course_id is null/undefined:", enrollment);
+              return null; // Skip this enrollment
             }
-        });
-
-        const courses = await Promise.all(
-            enrollments.map(async (enrollment) => {
-                const progress = await Progress.findOne({
-                    enrollment_id: enrollment._id
-                });
-
-                return {
-                    enrollment,
-                    isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
-                    progress
-                };
-            })
-        );
-
-        // Filter out any courses that are null (deleted)
-        const filteredCourses = courses.filter(course => course.enrollment.course_id !== null);
-
-        res.status(200).json(filteredCourses);
+  
+            const progress = await Progress.findOne({
+              enrollment_id: enrollment._id
+            });
+  
+            return {
+              enrollment,
+              isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
+              progress
+            };
+          } catch (error) {
+            console.error("Error in enrollments.map:", error);
+            return null; // Skip this enrollment
+          }
+        })
+      );
+      console.log("hi2", courses);
+  
+      // Filter out any courses that are null (deleted)
+      const filteredCourses = courses.filter(course => course !== null && course.enrollment.course_id !== null);
+  
+      res.status(200).json(filteredCourses);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching courses', error });
+      res.status(500).json({
+        message: 'Error fetching courses',
+        error
+      });
     }
-};
+  };
+  
 
 
 // Get all courses where the user is not enrolled
