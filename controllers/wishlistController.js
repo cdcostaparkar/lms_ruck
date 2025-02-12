@@ -1,5 +1,6 @@
-const Wishlist = require('../models//Wishlist'); 
+const Wishlist = require('../models//Wishlist');
 const Course = require('../models/Course');
+const Enrollment = require('../models/Enrollment');
 
 // Add to Wishlist
 const addToWishlist = async (req, res) => {
@@ -32,25 +33,50 @@ const removeFromWishlist = async (req, res) => {
     }
 };
 
-// Get all wishlisted courses for a user
+// Get all wishlisted courses for a user with isEnrolled flag
 const getAllWishlistedCourses = async (req, res) => {
     const { userId } = req.params;
 
     try {
         // Step 1: Get all course IDs from the wishlist
         const wishlists = await Wishlist.find({
-            user_id: userId
+            user_id: userId,
         }).select('course_id');
 
-        const wishlistedCourseIds = wishlists.map(wishlist => wishlist.course_id);
+        const wishlistedCourseIds = wishlists.map(
+            (wishlist) => wishlist.course_id,
+        );
 
         // Step 2: Get all courses from the wishlist
-        // const wishlistedCourses = await Course.find({
-        //     _id: { $in: wishlistedCourseIds },
-        //     isDeleted: false // Ensure we only get non-deleted courses
-        // }).populate('trainer_id', 'name'); // Populate trainer's name
+        const wishlistedCourses = await Course.find({
+            _id: { $in: wishlistedCourseIds },
+            isDeleted: false,
+        }).populate('trainer_id', 'name'); // Populate trainer's name
 
-        res.status(200).json(wishlistedCourseIds);
+        // Step 3: Fetch enrollments for the user for wishlisted courses
+        const enrollments = await Enrollment.find({
+            student_id: userId,
+            course_id: { $in: wishlistedCourseIds },
+            isDeleted: false,
+        });
+
+        // enrolled course IDs 
+        const enrolledCourseIds = new Set(
+            enrollments.map((enrollment) => enrollment.course_id.toString()),
+        );
+
+        // Step 4: Add the isEnrolled flag to each wishlisted course
+        const wishlistedCoursesWithEnrollmentFlag = wishlistedCourses.map(
+            (course) => {
+                const courseIdString = course._id.toString();
+                return {
+                    ...course.toObject(), // Convert mongoose object to plain JavaScript object
+                    isEnrolled: enrolledCourseIds.has(courseIdString),
+                };
+            },
+        );
+
+        res.status(200).json(wishlistedCoursesWithEnrollmentFlag);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching wishlisted courses', error });
     }
