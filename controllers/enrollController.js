@@ -94,6 +94,7 @@ exports.getAllEnrolledCourses = async (req, res) => {
       const filteredCourses = courses.filter(
         (course) => course && course.enrollment.course_id !== null
       );
+
   
       res.status(200).json(filteredCourses);
     } catch (error) {
