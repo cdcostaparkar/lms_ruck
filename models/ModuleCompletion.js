@@ -30,5 +30,5 @@ moduleCompletionSchema.index(
     { unique: true }
 );
 
-const ModuleCompletion = mongoose.model('Progress', moduleCompletionSchema);
+const ModuleCompletion = mongoose.model('ModuleCompletion', moduleCompletionSchema);
 module.exports = ModuleCompletion;
