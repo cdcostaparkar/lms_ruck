@@ -37,7 +37,7 @@ exports.createCourse = async (req, res) => {
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ isDeleted: false });
+        const courses = await Course.find({ isDeleted: false }).populate('trainer_id', 'name');
         res.json(courses);
     } catch (error) {
         res.status(500).json({ error: error.message });

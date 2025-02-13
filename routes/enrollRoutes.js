@@ -17,6 +17,7 @@ router.delete('/deleteAllEnrollments', enrollController.deleteAllEnrollments);
 router.get('/getAllEnrolledCoursesX/:userId', enrollController.getAllEnrolledCoursesX);
 // Delete All
 router.delete('/deleteAllEnrollmentsAndProgress', enrollController.deleteAllEnrollmentsAndProgress);
+router.delete('/deleteAllEnrollmentsAndProgressStudent/:userId', enrollController.deleteAllEnrollmentsAndProgressStudent);
 
 
 module.exports = router;
