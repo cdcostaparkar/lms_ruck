@@ -227,6 +227,23 @@ exports.deleteAllEnrollmentsAndProgress = async (req, res) => {
     }
 };
 
+exports.deleteAllEnrollmentsAndProgressStudent = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        // Delete all progress records
+        await Progress.deleteMany({});
+
+        // Delete all enrollments
+        const result = await Enrollment.deleteMany({
+            student_id: userId
+        });
+
+        res.status(200).json({ message: 'All enrollments and related progress deleted permanently', result });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting all enrollments and progress', error });
+    }
+};
+
 exports.getAllProgress = async (req, res) => {
     try {
         const progressRecords = await Progress.find();
