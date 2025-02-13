@@ -4,6 +4,8 @@ const router = express.Router();
 const enrollController = require('../controllers/enrollController');
 
 router.post('/enrollCourse/:userId/:courseId', enrollController.enrollCourse);
+router.post('/enrollCoursev2T/:userId/:courseId', enrollController.enrollCoursev2T);
+
 router.get('/getAllEnrolledCourses/:userId', enrollController.getAllEnrolledCourses);
 router.patch('/deleteEnrollment/:userId/:enrollmentId', enrollController.deleteEnrollment);
 router.get('/getAllNotEnrolledCourses/:userId', enrollController.getAllNotEnrolledCourses);

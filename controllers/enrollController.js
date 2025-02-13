@@ -2,6 +2,10 @@
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
 const Progress = require('../models/Progress');
+const Module = require('../models/Module');
+const ModuleCompletion = require('../models/ModuleCompletion');
+
+
 const User = require('../models/User');
 const Wishlist = require('../models/Wishlist');
 
@@ -39,74 +43,81 @@ exports.enrollCourse = async (req, res) => {
     }
 };
 
-// Get all enrolled courses for a user
 // Get all enrolled courses for a user with wishlist status
 exports.getAllEnrolledCourses = async (req, res) => {
     const {
-      userId
+        userId
     } = req.params;
-  
+
     try {
-      // Step 1: Get all course IDs from the wishlist
-      const wishlists = await Wishlist.find({
-        user_id: userId
-      }).select('course_id');
-  
-      const wishlistedCourseIds = new Set(wishlists.map((wishlist) => wishlist.course_id.toString()));
-  
-      // Step 2: Get all enrolled courses
-      const enrollments = await Enrollment.find({
-        student_id: userId,
-        isDeleted: false,
-      }).populate({
-        path: 'course_id',
-        match: {
-          isDeleted: false
-        },
-        populate: {
-          path: 'trainer_id',
-          select: 'name', // Select only the name of the trainer
-        },
-      });
-  
-    //   console.log("e", enrollments);
-      const courses = await Promise.all(
-        enrollments.map(async (enrollment) => {
-          if (!enrollment.course_id) {
-            // Handle the case where course_id is null
-            return null; // Or return a default object, or throw an error, depending on your needs
-          }
-  
-          const progress = await Progress.findOne({
-            enrollment_id: enrollment._id,
-          });
-  
-          return {
-            enrollment,
-            isWishlisted: wishlistedCourseIds.has(enrollment.course_id._id.toString()), // Check if the course is wishlisted
-            progress,
-          };
-        })
-      );
-    //   console.log("c", courses);
-  
-      // Filter out any courses that are null (deleted) or that returned null from the map
-      const filteredCourses = courses.filter(
-        (course) => course && course.enrollment.course_id !== null
-      );
+        // Step 1: Get all course IDs from the wishlist
+        const wishlists = await Wishlist.find({
+            user_id: userId
+        }).select('course_id');
 
-  
-      res.status(200).json(filteredCourses);
+        const wishlistedCourseIds = new Set(wishlists.map((wishlist) => wishlist.course_id.toString()));
+
+        // Step 2: Get all enrolled courses
+        const enrollments = await Enrollment.find({
+            student_id: userId,
+            isDeleted: false,
+        }).populate({
+            path: 'course_id',
+            match: {
+                isDeleted: false
+            },
+            populate: {
+                path: 'trainer_id',
+                select: 'name', // Select only the name of the trainer
+            },
+        });
+
+        const courses = await Promise.all(
+            enrollments.map(async (enrollment) => {
+                if (!enrollment.course_id) {
+                    // Handle the case where course_id is null
+                    return null; // Or return a default object, or throw an error, depending on your needs
+                }
+
+                const moduleCompletion = await ModuleCompletion.find({
+                    enrollment_id: enrollment._id,
+                });
+
+                let completionStatus = 0; // Default status if no module completions
+
+                if (moduleCompletion.length > 0) {
+                    const totalPercentage = moduleCompletion.reduce(
+                        (sum, completion) => sum + completion.percentage,
+                        0
+                    );
+                    completionPercentage = (totalPercentage / moduleCompletion.length) * 100; // Calculate average and round to nearest integer
+                    completionStatus = Math.round(completionPercentage);
+                }
+
+                return {
+                    enrollment,
+                    isWishlisted: wishlistedCourseIds.has(
+                        enrollment.course_id._id.toString()
+                    ), // Check if the course is wishlisted
+                    completionStatus, // Add the completion status to the response
+                };
+            })
+        );
+        // Filter out any courses that are null (deleted) or that returned null from the map
+        const filteredCourses = courses.filter(
+            (course) => course && course.enrollment.course_id !== null
+        );
+
+        res.status(200).json(filteredCourses);
     } catch (error) {
-      res.status(500).json({
-        message: 'Error fetching courses',
-        error
-      });
+        res.status(500).json({
+            message: 'Error fetching courses',
+            error
+        });
     }
-  };
+};
 
 
-// Get all courses where the user is not enrolled
 // Get all courses where the user is not enrolled with wishlist status
 exports.getAllNotEnrolledCourses = async (req, res) => {
     const { userId } = req.params;
@@ -248,7 +259,7 @@ exports.deleteAllEnrollments = async (req, res) => {
 //       userId,
 //       courseId
 //     } = req.params;
-  
+
 //     try {
 //       // Check if the user is already enrolled in the course
 //       const existingEnrollment = await Enrollment.findOne({
@@ -256,7 +267,7 @@ exports.deleteAllEnrollments = async (req, res) => {
 //         course_id: courseId,
 //         isDeleted: false, // Ensure we only check active enrollments
 //       });
-  
+
 //       if (existingEnrollment) {
 //         return res
 //           .status(400)
@@ -264,27 +275,27 @@ exports.deleteAllEnrollments = async (req, res) => {
 //             message: "User is already enrolled in this course.",
 //           });
 //       }
-  
+
 //       // Create enrollment record
 //       const enrollment = await Enrollment.create({
 //         student_id: userId,
 //         course_id: courseId,
 //       });
-  
+
 //       // Find all modules for the course
 //       const modules = await Module.find({
 //         course_id: courseId
 //       });
-  
+
 //       // Create module completion records for each module
 //       const moduleCompletions = modules.map((module) => ({
 //         enrollment_id: enrollment._id,
 //         course_id: courseId,
 //         module_id: module._id,
 //       }));
-  
+
 //       await ModuleCompletion.insertMany(moduleCompletions);
-  
+
 //       res.status(201).json({
 //         message: "Enrollment successful",
 //         enrollment
@@ -298,77 +309,79 @@ exports.deleteAllEnrollments = async (req, res) => {
 //         });
 //     }
 //   };
-  
+
 
 // V2 - Transactions
-// const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-// exports.enrollCourse = async (req, res) => {
-//   const {
-//     userId,
-//     courseId
-//   } = req.params;
+exports.enrollCoursev2T = async (req, res) => {
+    const {
+        userId,
+        courseId
+    } = req.params;
 
-//   const session = await mongoose.startSession(); // Start a session for the transaction
-//   session.startTransaction(); // Start the transaction
+    const session = await mongoose.startSession(); // Start a session for the transaction
+    session.startTransaction(); // Start the transaction
 
-//   try {
-//     // Check if the user is already enrolled in the course
-//     const existingEnrollment = await Enrollment.findOne({
-//       student_id: userId,
-//       course_id: courseId,
-//       isDeleted: false, // Ensure we only check active enrollments
-//     }).session(session); // Associate the query with the session
+    try {
+        // Check if the user is already enrolled in the course
+        const existingEnrollment = await Enrollment.findOne({
+            student_id: userId,
+            course_id: courseId,
+            isDeleted: false, // Ensure we only check active enrollments
+        }).session(session); // Associate the query with the session
 
-//     if (existingEnrollment) {
-//       await session.abortTransaction(); // Rollback the transaction
-//       session.endSession(); // End the session
-//       return res
-//         .status(400)
-//         .json({
-//           message: "User is already enrolled in this course.",
-//         });
-//     }
+        if (existingEnrollment) {
+            await session.abortTransaction(); // Rollback the transaction
+            session.endSession(); // End the session
+            return res
+                .status(400)
+                .json({
+                    message: "User is already enrolled in this course.",
+                });
+        }
 
-//     // Create enrollment record
-//     const enrollment = await Enrollment.create([{
-//       student_id: userId,
-//       course_id: courseId,
-//     }], {
-//       session
-//     }); // Pass the session to the create operation
+        // Create enrollment record
+        const enrollment = await Enrollment.create([{
+            student_id: userId,
+            course_id: courseId,
+        }], {
+            session
+        }); // Pass the session to the create operation
 
-//     // Find all modules for the course
-//     const modules = await Module.find({
-//       course_id: courseId
-//     }).session(session); // Associate the query with the session
+        // Find all modules for the course
+        const modules = await Module.find({
+            course_id: courseId
+        }).session(session); // Associate the query with the session
 
-//     // Create module completion records for each module
-//     const moduleCompletions = modules.map((module) => ({
-//       enrollment_id: enrollment[0]._id, // Access the first element of the array
-//       course_id: courseId,
-//       module_id: module._id,
-//     }));
+        // console.log("e",enrollment);
 
-//     await ModuleCompletion.insertMany(moduleCompletions, {
-//       session
-//     }); // Pass the session to the insertMany operation
+        // Create module completion records for each module
+        const moduleCompletions = modules.map((module) => ({
+            enrollment_id: enrollment[0]._id, // Access the first element of the array
+            course_id: courseId,
+            module_id: module._id,
+        }));
 
-//     await session.commitTransaction(); // Commit the transaction
-//     session.endSession(); // End the session
+        await ModuleCompletion.insertMany(moduleCompletions, {
+            session
+        }); // Pass the session to the insertMany operation
 
-//     res.status(201).json({
-//       message: "Enrollment successful",
-//       enrollment: enrollment[0] // Access the first element of the array
-//     });
-//   } catch (error) {
-//     await session.abortTransaction(); // Rollback the transaction
-//     session.endSession(); // End the session
-//     res
-//       .status(500)
-//       .json({
-//         message: "Error enrolling in course",
-//         error
-//       });
-//   }
-// };
+        await session.commitTransaction(); // Commit the transaction
+        session.endSession(); // End the session
+
+        res.status(201).json({
+            message: "Enrollment successful",
+            enrollment: enrollment[0] // Access the first element of the array
+        });
+    } catch (error) {
+        await session.abortTransaction(); // Rollback the transaction
+        session.endSession(); // End the session
+        res
+            .status(500)
+            .json({
+                message: "Error enrolling in course",
+                error
+            });
+    }
+};
