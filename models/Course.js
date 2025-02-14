@@ -1,32 +1,36 @@
 const mongoose = require('mongoose');
 
-const courseSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
+const courseSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    trainer_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    duration: {
+      type: Number,
+      default: 0,
+      min: [0, 'Duration must be a positive number.'],
+    },
+    imageUrl: {
+      // image data (Base64 encoded)
+      type: String,
+      default: '', // You can set a default image URL here if needed
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false, // for soft delete
+    },
   },
-  description: {
-    type: String,
-    required: true,
-  },
-  trainer_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  duration: {
-    type: Number,
-    default: 0,
-    min: [0, 'Duration must be a positive number.'],
-  },
-  imageUrl: { // New field for the image URL
-    type: String,
-    default: '' // You can set a default image URL here if needed
-  },
-  isDeleted: {
-    type: Boolean,
-    default: false, //for-soft delete
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;
