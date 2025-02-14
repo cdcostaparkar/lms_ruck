@@ -1,8 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
+const multer = require('multer');
 
-router.post('/createCourse/:userId', courseController.createCourse);
+const storage = multer.memoryStorage(); // Store file in memory
+const upload = multer({ storage: storage });
+
+router.post(
+  '/createCourse/:userId',
+  upload.single('image'),
+  courseController.createCourse
+);
+
 router.get('/getAllCourses', courseController.getAllCourses);
 router.get('/getAllCoursesX', courseController.getAllCoursesX);
 

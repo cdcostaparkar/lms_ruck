@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+// const path = require('path');
 
 const userRoutes = require('./routes/userRoutes');
 const moduleRoutes=require('./routes/moduleRoutes');
@@ -32,6 +33,10 @@ app.get('/', (req, res) => {
   res.send('Hello from the MERN backend!');
 });
 
+
+// Serve static files from the 'uploads' directory(For url)
+// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Use Routes
 app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
@@ -44,38 +49,7 @@ app.use('/api/moduleCompletion', moduleCompletionRoutes);
 
 
 
-
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-
-
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const bodyParser = require('body-parser');
-// const userRoutes = require('./routes/userRoutes');
-// const courseRoutes = require('./routes/courseRoutes');
-// const moduleRoutes = require('./routes/moduleRoutes');
-
-// const app = express();
-// app.use(bodyParser.json());
-
-// // Connect to MongoDB
-// mongoose.connect('mongodb://localhost:27017/yourdbname', {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true
-// });
-
-// // Use Routes
-// app.use('/api/users', userRoutes);
-// app.use('/api/courses', courseRoutes);
-// app.use('/api/modules', moduleRoutes);
-
-// // Start the server
-// const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () => {
-//     console.log(`Server is running on port ${PORT}`);
-// });
-

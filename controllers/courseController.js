@@ -2,15 +2,17 @@ const Course = require('../models/Course');
 const Enrollment = require('../models/Enrollment');
 const User = require('../models/User');
 
-// Create Course - working wohoo
+// Create Course 
 exports.createCourse = async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate('role_id', 'role_name');
+        const user = await User.findById(req.params.userId).populate(
+            'role_id',
+            'role_name'
+        );
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Check if the user's role is "trainer"
         const roleName = user.role_id ? user.role_id.role_name : 'Unknown role';
         if (roleName !== 'trainer') {
             return res.status(404).json({ error: 'Trainer not found' });
@@ -19,11 +21,21 @@ exports.createCourse = async (req, res) => {
         const courseData = {
             title: req.body.title,
             description: req.body.description,
-            trainer_id: req.params.userId
+            trainer_id: req.params.userId,
         };
 
         if (req.body.duration) {
             courseData.duration = req.body.duration;
+        }
+
+        if (req.file) {
+            try {
+                const imageBase64 = req.file.buffer.toString('base64'); // Access buffer directly
+                courseData.imageUrl = imageBase64;
+            } catch (err) {
+                console.error('Error processing image:', err);
+                return res.status(500).json({ error: 'Error processing image' });
+            }
         }
 
         const course = new Course(courseData);
@@ -33,7 +45,6 @@ exports.createCourse = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
@@ -60,7 +71,7 @@ exports.updateCourse = async (req, res) => {
     try {
         const course = await Course.findById(req.params.courseId);
         const userId = req.query.userId;
-        
+
         // Check if the course exists
         if (!course) {
             return res.status(404).json({ error: 'Course not found' });
@@ -70,11 +81,11 @@ exports.updateCourse = async (req, res) => {
         if (course.trainer_id.toString() !== userId) {
             return res.status(403).json({ error: 'Unauthorized: You do not have permission to update this course' });
         }
-        
+
         // Update the course
         const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
         res.json(updatedCourse);
-        
+
         // const course = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
         // res.json(course);
     } catch (error) {
