@@ -5,34 +5,39 @@ const User = require('../models/User');
 // Create Course - working wohoo
 exports.createCourse = async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate('role_id', 'role_name');
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Check if the user's role is "trainer"
-        const roleName = user.role_id ? user.role_id.role_name : 'Unknown role';
-        if (roleName !== 'trainer') {
-            return res.status(404).json({ error: 'Trainer not found' });
-        }
-
-        const courseData = {
-            title: req.body.title,
-            description: req.body.description,
-            trainer_id: req.params.userId
-        };
-
-        if (req.body.duration) {
-            courseData.duration = req.body.duration;
-        }
-
-        const course = new Course(courseData);
-        await course.save();
-        res.status(201).json(course);
+      const user = await User.findById(req.params.userId).populate('role_id', 'role_name');
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Check if the user's role is "trainer"
+      const roleName = user.role_id ? user.role_id.role_name : 'Unknown role';
+      if (roleName !== 'trainer') {
+        return res.status(404).json({ error: 'Trainer not found' });
+      }
+  
+      const courseData = {
+        title: req.body.title,
+        description: req.body.description,
+        trainer_id: req.params.userId,
+      };
+  
+      if (req.body.duration) {
+        courseData.duration = req.body.duration;
+      }
+  
+      // Add the image URL to the course data if a file was uploaded
+      if (req.file) {
+        courseData.imageUrl = req.file.path; // Save the file path in the database
+      }
+  
+      const course = new Course(courseData);
+      await course.save();
+      res.status(201).json(course);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+      res.status(400).json({ error: error.message });
     }
-};
+  };
 
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
