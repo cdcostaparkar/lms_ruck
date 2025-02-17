@@ -1,4 +1,6 @@
 const Course = require('../models/Course');
+const Module = require('../models/Module');
+
 const Enrollment = require('../models/Enrollment');
 const User = require('../models/User');
 
@@ -45,15 +47,38 @@ exports.createCourse = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ isDeleted: false }).populate('trainer_id', 'name');
-        res.json(courses);
+      const courses = await Course.find({ isDeleted: false }).populate(
+        'trainer_id',
+        'name'
+      );
+  
+      const coursesWithModuleDuration = await Promise.all(
+        courses.map(async (course) => {
+          const modules = await Module.find({ course_id: course._id });
+          const totalModuleDuration = modules.reduce(
+            (sum, module) => sum + module.duration,
+            0
+          );
+  
+          const { duration, ...courseData } = course.toObject(); // Destructure and exclude duration
+  
+          return {
+            ...courseData,
+            duration: totalModuleDuration,
+          };
+        })
+      );
+  
+      res.json(coursesWithModuleDuration);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-};
+  };
+  
 
 // Get All Courses
 exports.getAllCoursesX = async (req, res) => {
@@ -103,15 +128,37 @@ exports.deleteCourse = async (req, res) => {
     }
 };
 // Get Courses Belonging to Trainer
+// Get Courses Belonging to Trainer
 exports.getTrainerCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ trainer_id: req.params.userId, isDeleted: false });
-        res.json(courses);
+      const courses = await Course.find({
+        trainer_id: req.params.userId,
+        isDeleted: false,
+      });
+  
+      const coursesWithModuleDuration = await Promise.all(
+        courses.map(async (course) => {
+          const modules = await Module.find({ course_id: course._id });
+          const duration = modules.reduce(
+            (sum, module) => sum + module.duration,
+            0
+          );
+  
+          const { ...courseData } = course.toObject(); // Destructure all properties
+  
+          return {
+            ...courseData,
+            duration: duration, // Use calculated duration
+          };
+        })
+      );
+  
+      res.json(coursesWithModuleDuration);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-};
-
+  };
+  
 // Get Courses Not Belonging to Trainer
 exports.getNotTrainerCourses = async (req, res) => {
     try {
