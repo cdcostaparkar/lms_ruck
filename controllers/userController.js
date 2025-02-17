@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Enrollment = require('../models/Enrollment');
+const Enrollment = require('../models/Enrollment'); // to implement the schema
 const Progress = require('../models/Progress');
 const Role = require('../models/Role')
 
@@ -11,11 +11,11 @@ exports.authUser = async (req, res) => {
         // Find the user by username
         const user = await User.findOne({ username });
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid Username' });
         }
 
         if (user.password !== password) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid Password' });
         }
 
         const role = await Role.findById(user.role_id);
@@ -64,7 +64,7 @@ exports.createUser = async (req, res) => {
 // Get User Details - getUserDetails
 exports.getUserDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate('role_id','role_name');
+        const user = await User.findById(req.params.id).populate('role_id','role_name'); // populate: we are taking
 
         if(!user){
             return res.status(404).json({error:'User not found'});
@@ -86,7 +86,7 @@ exports.getUserDetails = async (req, res) => {
 
 /* Needs edits */
 
-// Get User Progress - getUserProgress
+// Get User Progress - getUserProgress (Not Used)
 exports.getUserProgress = async (req, res) => {
     try {
         const progress = await Progress.find({ enrollment_id: req.params.userId });
@@ -98,8 +98,8 @@ exports.getUserProgress = async (req, res) => {
 
 
 /* Check After adding the records for other tables */
-// Get Completed Courses -getCompletedCourses
-exports.getCompletedCourses = async (req, res) => {
+// Get Completed Courses -getCompletedCourses (Not Used)
+exports.getCompletedCourses = async (req, res) => { 
     try {
         const enrollments = await Enrollment.find({ student_id: req.params.userId });
         const completedCourses = enrollments.filter(enrollment => enrollment.completed_modules > 0);

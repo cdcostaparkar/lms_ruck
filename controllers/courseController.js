@@ -48,7 +48,7 @@ exports.createCourse = async (req, res) => {
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ isDeleted: false }).populate('trainer_id', 'name');
+        const courses = await Course.find({ isDeleted: false }).sort({ createdAt: -1 }).populate('trainer_id', 'name');
         res.json(courses);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -105,7 +105,12 @@ exports.deleteCourse = async (req, res) => {
 // Get Courses Belonging to Trainer
 exports.getTrainerCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ trainer_id: req.params.userId, isDeleted: false });
+        const courses = await Course.find({ 
+            trainer_id: req.params.userId, 
+            isDeleted: false 
+        })
+            .sort({ createdAt: -1 })
+            .exec();
         res.json(courses);
     } catch (error) {
         res.status(500).json({ error: error.message });
