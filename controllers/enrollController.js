@@ -45,17 +45,17 @@ exports.enrollCourse = async (req, res) => {
 
 // Get all enrolled courses for a user with wishlist status
 exports.getAllEnrolledCourses = async (req, res) => {
-    const {
-        userId
-    } = req.params;
+    const { userId } = req.params;
 
     try {
         // Step 1: Get all course IDs from the wishlist
-        const wishlists = await Wishlist.find({
-            user_id: userId
-        }).select('course_id');
+        const wishlists = await Wishlist.find({ user_id: userId }).select(
+            'course_id'
+        );
 
-        const wishlistedCourseIds = new Set(wishlists.map((wishlist) => wishlist.course_id.toString()));
+        const wishlistedCourseIds = new Set(
+            wishlists.map((wishlist) => wishlist.course_id.toString())
+        );
 
         // Step 2: Get all enrolled courses
         const enrollments = await Enrollment.find({
@@ -65,9 +65,8 @@ exports.getAllEnrolledCourses = async (req, res) => {
             .sort({ enrolled_at: -1 })
             .populate({
                 path: 'course_id',
-                match: {
-                    isDeleted: false
-                },
+                match: { isDeleted: false },
+                select: 'title description trainer_id _id imageUrl',
                 populate: {
                     path: 'trainer_id',
                     select: 'name', // Select only the name of the trainer
@@ -81,6 +80,14 @@ exports.getAllEnrolledCourses = async (req, res) => {
                     return null; // Or return a default object, or throw an error, depending on your needs
                 }
 
+                const course = enrollment.course_id;
+
+                const modules = await Module.find({ course_id: course._id });
+                const duration = modules.reduce(
+                    (sum, module) => sum + module.duration,
+                    0
+                );
+
                 const moduleCompletion = await ModuleCompletion.find({
                     enrollment_id: enrollment._id,
                 });
@@ -92,16 +99,19 @@ exports.getAllEnrolledCourses = async (req, res) => {
                         (sum, completion) => sum + completion.percentage,
                         0
                     );
-                    completionPercentage = (totalPercentage / moduleCompletion.length) * 100; // Calculate average and round to nearest integer
+                    completionPercentage =
+                        (totalPercentage / moduleCompletion.length) * 100; // Calculate average and round to nearest integer
                     completionStatus = Math.round(completionPercentage);
                 }
 
+                const { ...courseData } = course.toObject();
+
                 return {
+                    ...courseData,
                     enrollment,
-                    isWishlisted: wishlistedCourseIds.has(
-                        enrollment.course_id._id.toString()
-                    ), // Check if the course is wishlisted
+                    isWishlisted: wishlistedCourseIds.has(course._id.toString()), // Check if the course is wishlisted
                     completionStatus, // Add the completion status to the response
+                    duration,
                 };
             })
         );
@@ -114,11 +124,10 @@ exports.getAllEnrolledCourses = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             message: 'Error fetching courses',
-            error
+            error,
         });
     }
 };
-
 
 // Get all courses where the user is not enrolled with wishlist status
 exports.getAllNotEnrolledCourses = async (req, res) => {
@@ -126,37 +135,57 @@ exports.getAllNotEnrolledCourses = async (req, res) => {
 
     try {
         // Step 1: Get all course IDs from the wishlist
-        const wishlists = await Wishlist.find({
-            user_id: userId
-        }).select('course_id');
+        const wishlists = await Wishlist.find({ user_id: userId }).select(
+            'course_id'
+        );
 
-        const wishlistedCourseIds = new Set(wishlists.map(wishlist => wishlist.course_id.toString()));
+        const wishlistedCourseIds = new Set(
+            wishlists.map((wishlist) => wishlist.course_id.toString())
+        );
 
         // Step 2: Get all course IDs the user is enrolled in
         const enrollments = await Enrollment.find({
             student_id: userId,
-            isDeleted: false
+            isDeleted: false,
         }).select('course_id');
 
-        const enrolledCourseIds = enrollments.map(enrollment => enrollment.course_id);
+        const enrolledCourseIds = enrollments.map(
+            (enrollment) => enrollment.course_id
+        );
 
         // Step 3: Get all courses and filter out the enrolled ones
         const coursesNotEnrolled = await Course.find({
             _id: { $nin: enrolledCourseIds },
-            isDeleted: false // Ensure we only get non-deleted courses
-        }).sort({ createdAt: -1 }).populate('trainer_id', 'name'); // Populate trainer's name
+            isDeleted: false, // Ensure we only get non-deleted courses
+        })
+            .sort({ enrolled_at: -1 })
+            .populate('trainer_id', 'name'); // Populate trainer's name
 
         // Step 4: Add wishlist status to the courses
-        const coursesWithWishlistStatus = coursesNotEnrolled.map(course => ({
-            ...course.toObject(), // Convert to plain object
-            isWishlisted: wishlistedCourseIds.has(course._id.toString()) // Check if the course is wishlisted
-        }));
+        const coursesWithWishlistStatus = await Promise.all(
+            coursesNotEnrolled.map(async (course) => {
+                const modules = await Module.find({ course_id: course._id });
+                const duration = modules.reduce(
+                    (sum, module) => sum + module.duration,
+                    0
+                );
+
+                const { ...courseData } = course.toObject();
+
+                return {
+                    ...courseData, // Convert to plain object
+                    isWishlisted: wishlistedCourseIds.has(course._id.toString()), // Check if the course is wishlisted
+                    duration,
+                };
+            })
+        );
 
         res.status(200).json(coursesWithWishlistStatus);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching courses', error });
     }
 };
+
 
 
 

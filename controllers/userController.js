@@ -86,7 +86,7 @@ exports.getUserDetails = async (req, res) => {
 
 /* Needs edits */
 
-// Get User Progress - getUserProgress (Not Used)
+// Get User Progress - getUserProgress(Not Used)
 exports.getUserProgress = async (req, res) => {
     try {
         const progress = await Progress.find({ enrollment_id: req.params.userId });
@@ -98,8 +98,8 @@ exports.getUserProgress = async (req, res) => {
 
 
 /* Check After adding the records for other tables */
-// Get Completed Courses -getCompletedCourses (Not Used)
-exports.getCompletedCourses = async (req, res) => { 
+// Get Completed Courses -getCompletedCourses(Not Used)
+exports.getCompletedCourses = async (req, res) => {
     try {
         const enrollments = await Enrollment.find({ student_id: req.params.userId });
         const completedCourses = enrollments.filter(enrollment => enrollment.completed_modules > 0);

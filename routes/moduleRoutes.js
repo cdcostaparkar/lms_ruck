@@ -7,6 +7,9 @@ router.get('/getAllModuleDetail/:courseId', moduleController.getAllModuleDetail)
 router.patch('/updateModule/:moduleId', moduleController.updateModule);
 router.post('/createModule/:courseId', moduleController.createModule);
 
+// delete module by id
+router.delete('/deleteModuleById/:moduleId', moduleController.deleteModuleById);
+
 // Admin APIs
 router.get('/getModuleDetail/:moduleId', moduleController.getModuleDetail); // efficient if big data
 router.delete('/deleteAllModules', moduleController.deleteAllModules);
