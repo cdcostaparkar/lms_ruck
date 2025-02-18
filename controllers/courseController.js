@@ -26,10 +26,6 @@ exports.createCourse = async (req, res) => {
             trainer_id: req.params.userId,
         };
 
-        if (req.body.duration) {
-            courseData.duration = req.body.duration;
-        }
-
         if (req.file) {
             try {
                 const imageBase64 = req.file.buffer.toString('base64'); // Access buffer directly
@@ -51,7 +47,7 @@ exports.createCourse = async (req, res) => {
 // Get All Courses
 exports.getAllCourses = async (req, res) => {
     try {
-      const courses = await Course.find({ isDeleted: false }).populate(
+      const courses = await Course.find({ isDeleted: false }).sort({ createdAt: -1 }).populate(
         'trainer_id',
         'name'
       );
@@ -94,29 +90,49 @@ exports.getAllCoursesX = async (req, res) => {
 // Update Course
 exports.updateCourse = async (req, res) => {
     try {
-        const course = await Course.findById(req.params.courseId);
-        const userId = req.query.userId;
-
-        // Check if the course exists
-        if (!course) {
-            return res.status(404).json({ error: 'Course not found' });
-        }
-
-        // Check if the course belongs to the user
-        if (course.trainer_id.toString() !== userId) {
-            return res.status(403).json({ error: 'Unauthorized: You do not have permission to update this course' });
-        }
-
-        // Update the course
-        const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
-        res.json(updatedCourse);
-
-        // const course = await Course.findByIdAndUpdate(req.params.courseId, req.body, { new: true });
-        // res.json(course);
+        // console.log(req.headers);
+        // console.log(req.params);
+        // console.log(req.body);
+      const course = await Course.findById(req.params.courseId);
+      const userId = req.query.userId;
+  
+      // Check if the course exists
+      if (!course) {
+        return res.status(404).json({ error: 'Course not found' });
+      }
+  
+      // Check if the course belongs to the user
+      if (course.trainer_id.toString() !== userId) {
+        return res
+          .status(403)
+          .json({
+            error:
+              'Unauthorized: You do not have permission to update this course',
+          });
+      }
+  
+      // Prepare update object
+      const updateData = {
+        title: req.body.title,
+        description: req.body.description,
+      };
+  
+      if (req.body.image) {
+        updateData.imageUrl = req.body.image; // Save the base64 string
+      }
+  
+      const updatedCourse = await Course.findByIdAndUpdate(
+        req.params.courseId,
+        updateData,
+        { new: true }
+      );
+  
+      res.json(updatedCourse);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+      console.error('Error updating course:', error);
+      res.status(400).json({ error: error.message });
     }
-};
+  };
 
 // Soft Delete Course
 exports.deleteCourse = async (req, res) => {
@@ -131,10 +147,13 @@ exports.deleteCourse = async (req, res) => {
 // Get Courses Belonging to Trainer
 exports.getTrainerCourses = async (req, res) => {
     try {
-      const courses = await Course.find({
-        trainer_id: req.params.userId,
-        isDeleted: false,
-      });
+       const courses = await Course.find({ 
+            trainer_id: req.params.userId, 
+            isDeleted: false 
+        })
+            .sort({ createdAt: -1 })
+            .populate('trainer_id', 'name')
+            .exec();
   
       const coursesWithModuleDuration = await Promise.all(
         courses.map(async (course) => {

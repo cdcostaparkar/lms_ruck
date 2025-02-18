@@ -32,10 +32,10 @@ exports.enrollCourse = async (req, res) => {
         });
 
         // Create progress record
-        await Progress.create({
-            enrollment_id: enrollment._id,
-            status: 0 // Initial status
-        });
+        // await Progress.create({
+        //     enrollment_id: enrollment._id,
+        //     status: 0 // Initial status
+        // });
 
         res.status(201).json({ message: 'Enrollment successful', enrollment });
     } catch (error) {
@@ -61,15 +61,17 @@ exports.getAllEnrolledCourses = async (req, res) => {
         const enrollments = await Enrollment.find({
             student_id: userId,
             isDeleted: false,
-        }).populate({
-            path: 'course_id',
-            match: { isDeleted: false },
-            select: 'title description trainer_id _id imageUrl',
-            populate: {
-                path: 'trainer_id',
-                select: 'name', // Select only the name of the trainer
-            },
-        });
+        })
+            .sort({ enrolled_at: -1 })
+            .populate({
+                path: 'course_id',
+                match: { isDeleted: false },
+                select: 'title description trainer_id _id imageUrl',
+                populate: {
+                    path: 'trainer_id',
+                    select: 'name', // Select only the name of the trainer
+                },
+            });
 
         const courses = await Promise.all(
             enrollments.map(async (enrollment) => {
@@ -155,7 +157,9 @@ exports.getAllNotEnrolledCourses = async (req, res) => {
         const coursesNotEnrolled = await Course.find({
             _id: { $nin: enrolledCourseIds },
             isDeleted: false, // Ensure we only get non-deleted courses
-        }).populate('trainer_id', 'name'); // Populate trainer's name
+        })
+            .sort({ enrolled_at: -1 })
+            .populate('trainer_id', 'name'); // Populate trainer's name
 
         // Step 4: Add wishlist status to the courses
         const coursesWithWishlistStatus = await Promise.all(
@@ -410,6 +414,11 @@ exports.enrollCoursev2T = async (req, res) => {
         await ModuleCompletion.insertMany(moduleCompletions, {
             session
         }); // Pass the session to the insertMany operation
+
+        // Remove from wishlist if present
+        await Wishlist.deleteOne({ user_id: userId, course_id: courseId }).session(
+            session
+        );
 
         await session.commitTransaction(); // Commit the transaction
         session.endSession(); // End the session

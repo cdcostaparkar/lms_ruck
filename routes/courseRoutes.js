@@ -3,21 +3,27 @@ const router = express.Router();
 const courseController = require('../controllers/courseController');
 const multer = require('multer');
 
-const storage = multer.memoryStorage(); // Store file in memory
-const upload = multer({ storage: storage });
+// Multer instance for createCourse (handles file upload)
+const storage = multer.memoryStorage();
+const uploadCreate = multer({ storage: storage });
+
+// Multer instance for updateCourse (parses FormData, no file handling)
+const uploadUpdate = multer();
 
 router.post(
   '/createCourse/:userId',
-  upload.single('image'),
+  uploadCreate.single('image'),
   courseController.createCourse
 );
 
 router.get('/getAllCourses', courseController.getAllCourses);
 router.get('/getAllCoursesX', courseController.getAllCoursesX);
 
-// router.patch('/updateCourse/:courseId', courseController.updateCourse);
-router.patch('/updateCourse/:courseId', courseController.updateCourse);
-
+router.patch(
+  '/updateCourse/:courseId',
+  uploadUpdate.none(),
+  courseController.updateCourse
+);
 router.patch('/deleteCourse/:courseId', courseController.deleteCourse);
 
 // trainer APIs
