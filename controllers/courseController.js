@@ -26,10 +26,10 @@ exports.createCourse = async (req, res) => {
             trainer_id: req.params.userId,
         };
 
-        if (req.file) {
+        if (req.body.image) {
             try {
-                const imageBase64 = req.file.buffer.toString('base64'); // Access buffer directly
-                courseData.imageUrl = imageBase64;
+                // const imageBase64 = req.file.buffer.toString('base64'); // Access buffer directly
+                courseData.imageUrl = req.body.image;
             } catch (err) {
                 console.error('Error processing image:', err);
                 return res.status(500).json({ error: 'Error processing image' });

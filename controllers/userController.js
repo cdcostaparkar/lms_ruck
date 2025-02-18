@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Enrollment = require('../models/Enrollment');
+const Enrollment = require('../models/Enrollment'); // to implement the schema
 const Progress = require('../models/Progress');
 const Role = require('../models/Role')
 
@@ -64,7 +64,7 @@ exports.createUser = async (req, res) => {
 // Get User Details - getUserDetails
 exports.getUserDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate('role_id','role_name');
+        const user = await User.findById(req.params.id).populate('role_id','role_name'); // populate: we are taking
 
         if(!user){
             return res.status(404).json({error:'User not found'});
