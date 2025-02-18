@@ -14,11 +14,6 @@ const courseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    duration: {
-      type: Number,
-      default: 0,
-      min: [0, 'Duration must be a positive number.'],
-    },
     imageUrl: {
       // image data (Base64 encoded)
       type: String,

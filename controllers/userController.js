@@ -11,11 +11,11 @@ exports.authUser = async (req, res) => {
         // Find the user by username
         const user = await User.findOne({ username });
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid Username' });
         }
 
         if (user.password !== password) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Invalid Password' });
         }
 
         const role = await Role.findById(user.role_id);
@@ -86,7 +86,7 @@ exports.getUserDetails = async (req, res) => {
 
 /* Needs edits */
 
-// Get User Progress - getUserProgress
+// Get User Progress - getUserProgress(Not Used)
 exports.getUserProgress = async (req, res) => {
     try {
         const progress = await Progress.find({ enrollment_id: req.params.userId });
@@ -98,7 +98,7 @@ exports.getUserProgress = async (req, res) => {
 
 
 /* Check After adding the records for other tables */
-// Get Completed Courses -getCompletedCourses
+// Get Completed Courses -getCompletedCourses(Not Used)
 exports.getCompletedCourses = async (req, res) => {
     try {
         const enrollments = await Enrollment.find({ student_id: req.params.userId });
