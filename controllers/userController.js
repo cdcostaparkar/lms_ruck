@@ -3,6 +3,49 @@ const Enrollment = require('../models/Enrollment'); // to implement the schema
 const Progress = require('../models/Progress');
 const Role = require('../models/Role')
 
+// reset Password
+exports.resetPassword = async (req, res) => {
+    const { email, newPassword } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        // Hash the new password
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to reset password.' });
+    }
+};
+
+// Get User by Email
+exports.getUserByEmail = async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        // Find the user by email
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Return the user object
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 // Authenticate User - authUser
 exports.authUser = async (req, res) => {
     try {
@@ -35,25 +78,20 @@ exports.authUser = async (req, res) => {
 // Create User - createUser
 exports.createUser = async (req, res) => {
     try {
-        const {role_name, ...userData} = req.body;
-        const role = await Role.findOne({role_name});
-        if(!role){
-            return res.status(404).json({error:'Role not found'});
+        const { role_name, ...userData } = req.body;
+        const role = await Role.findOne({ role_name });
+        if (!role) {
+            return res.status(404).json({ error: 'Role not found' });
         }
 
         const user = new User({
             ...userData,
-            role_id:role._id 
+            role_id: role._id
         });
         await user.save();
         res.status(201).json({
             userId: user._id,
-            // username: user.username,
-            // name: user.name,
-            // email: user.email,
-            // phone: user.phone,
-            // address: user.address,
-            role_name: role_name 
+            role_name: role_name
         });
     } catch (error) {
         res.status(400).json({ error: error.message });
@@ -64,19 +102,19 @@ exports.createUser = async (req, res) => {
 // Get User Details - getUserDetails
 exports.getUserDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate('role_id','role_name'); // populate: we are taking
+        const user = await User.findById(req.params.id).populate('role_id', 'role_name'); // populate: we are taking
 
-        if(!user){
-            return res.status(404).json({error:'User not found'});
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
         const userDetails = {
             username: user.username,
-            name:user.name,
-            email:user.email,
-            phone:user.phone,
-            address:user.address,
-            role_name:user.role_id.role_name
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            address: user.address,
+            role_name: user.role_id.role_name
         };
         res.json(userDetails);
     } catch (error) {
