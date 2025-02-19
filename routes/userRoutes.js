@@ -12,6 +12,10 @@ router.get('/getCompletedCourses/:userId', userController.getCompletedCourses);
 router.delete('/adminDeleteUsers', userController.adminDeleteUsers);
 router.delete('/adminDeleteUserId/:userId', userController.adminDeleteUserId);
 
+// otp
+router.post('/resetPassword', userController.resetPassword);
+router.get('/getUserByEmail', userController.getUserByEmail);
+
 
 
 // get all users
